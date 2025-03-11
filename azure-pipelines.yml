@@ -1,0 +1,40 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main  # Change branch if needed
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '18.x'  # Use the latest Node.js version
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install
+    npm run build  # If applicable; remove if not needed
+  displayName: 'Install Dependencies & Build'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+    replaceExistingArchive: true
+  displayName: 'Archive App'
+
+- upload: $(Build.ArtifactStagingDirectory)/app.zip
+  artifact: drop
+
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: '<Your-Azure-Subscription>'
+    appName: '<Your-App-Service-Name>'
+    package: '$(Build.ArtifactStagingDirectory)/app.zip'
+  displayName: 'Deploy to Azure App Service'
